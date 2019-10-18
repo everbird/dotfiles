@@ -1,6 +1,6 @@
 export ZSH=/Users/everbird/.oh-my-zsh
 ZSH_THEME="robbyrussell"
-plugins=(git osx brew vagrant fabric gem pip python rake ruby rvm github supervisor)
+plugins=(git osx brew vagrant fabric gem pip python rake ruby rvm github supervisor zsh-syntax-highlighting zsh-autosuggestions zsh-completions)
 
 # User configuration
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -22,3 +22,4 @@ alias pyfftp="python ~/bin/pyfftp.py"
 alias mars="java -jar ~/bin/mars.jar"
 
 export PATH="/usr/local/sbin:$PATH"
+autoload -U compinit && compinit

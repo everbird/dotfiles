@@ -1,0 +1,42 @@
+[user]
+    name = everbird
+    email = stephen.zhuang@gmail.com
+[alias]
+    aa = add --all
+    b = branch -vv
+    br = branch
+    cb = checkout HEAD -b
+    ci = commit
+    co = checkout
+    di = diff
+    dc = diff --cached
+    di = diff
+    du = diff @{u}
+    dus = diff @{u} --stat
+    ff = merge --ff-only
+    l = log --graph --pretty=grb
+    ll = log --graph --pretty=grb --stat
+    lu = log --graph --pretty=grb @{u}..
+    lus = log --graph --pretty=grb @{u}.. --stat
+    pl = pull
+    ph = push
+    rb = rebase
+    s = status -bs
+    sh = stash
+    tip = log -1 --stat
+[pretty]
+    grb = %C(yellow)%h%Creset %Cgreen(%ad)%Creset %C(bold)<%an>%Creset %C(bold green)%d%Creset %s
+[core]
+    pager = less -+FSRX -FRX
+[blame]
+    date = auto:human
+[log]
+    decorate = true
+    date = auto:human
+[commit]
+    verbose = true
+[color]
+    diff = auto
+    status = auto
+[include]
+    path = local-config
