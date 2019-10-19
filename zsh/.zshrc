@@ -1,6 +1,8 @@
 export ZSH=~/.oh-my-zsh
+# Only use oh-my-zsh built-in settings here, override later if zplug
+# exists
 ZSH_THEME="robbyrussell"
-plugins=(git osx vagrant brew z vagrant-prompt zsh-completions zsh-autosuggestions zsh-syntax-highlighting )
+plugins=(git osx vagrant brew z fzf tmux vagrant-prompt)
 
 # zsh plugin config
 autoload -U compinit && compinit
@@ -14,6 +16,39 @@ source $ZSH/oh-my-zsh.sh
 
 # Enable z
 source $ZSH/plugins/z/z.sh
+
+# zplug
+export ZPLUG_HOME=/usr/local/opt/zplug
+if [ -e "${ZPLUG_HOME}" ]; then
+    source $ZPLUG_HOME/init.zsh
+    # Override $ZSH_THEME
+    zplug "dracula/zsh", as:theme
+
+    # Async for zsh, used by pure
+    zplug "mafredri/zsh-async", from:github, defer:0
+    # zplug "sindresorhus/pure", use:pure.zsh, from:github, as:theme
+    zplug "zsh-users/zsh-autosuggestions"
+    zplug "zsh-users/zsh-completions"
+    zplug "zsh-users/zsh-syntax-highlighting"
+    # If you want to use zsh-syntax-highlighting along with this script, then make sure that you load it before you load this script
+    zplug "zsh-users/zsh-history-substring-search", defer:2
+    zplug "agkozak/zsh-z"
+    # Install plugins if there are plugins that have not been installed
+    if ! zplug check --verbose; then
+        printf "Install? [y/N]: "
+        if read -q; then
+            echo; zplug install
+        fi
+    fi
+    # Then, source plugins and add commands to $PATH
+    zplug load --verbose
+
+    if zplug check zsh-users/zsh-history-substring-search; then
+        bindkey '^[[A' history-substring-search-up
+        bindkey '^[[B' history-substring-search-down
+    fi
+fi
+
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
@@ -47,3 +82,5 @@ autoload -U compinit && compinit
 
 # Twitter
 alias nest="ssh -A nest.smfc.twitter.com"
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
