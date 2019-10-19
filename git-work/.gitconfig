@@ -1,6 +1,10 @@
 [user]
-    name = everbird
-    email = stephen.zhuang@gmail.com
+	name = Stephen Zhuang
+	email = szhuang@twitter.com
+[diff]
+	renames = true
+[http]
+	postBuffer = 524288000
 [alias]
     aa = add --all
     b = branch -vv
@@ -38,5 +42,6 @@
 [color]
     diff = auto
     status = auto
+    ui = true
 [include]
     path = local-config

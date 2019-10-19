@@ -9,9 +9,9 @@ all: personal
 #. Internal vars
 STOW := stowsh/stowsh
 
-default_packages := zsh tmux
+default_packages := zsh tmux spacemacs
 personal_packages := $(default_packages) git
-work_packages := $(default_packages) git-work
+work_packages := $(default_packages) git-work netrc
 
 # Autocompletion
 personal: install-personal
