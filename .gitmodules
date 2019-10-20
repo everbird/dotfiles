@@ -1,3 +1,6 @@
 [submodule "stowsh"]
 	path = stowsh
 	url = https://github.com/everbird/stowsh.git
+[submodule "bundle/tmux-tpm"]
+	path = bundle/tmux-tpm
+	url = https://github.com/tmux-plugins/tpm
