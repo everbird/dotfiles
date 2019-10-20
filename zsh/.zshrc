@@ -3,6 +3,8 @@ export ZSH=~/.oh-my-zsh
 # exists
 ZSH_THEME="robbyrussell"
 plugins=(git osx vagrant brew z fzf tmux vagrant-prompt)
+## history-substring-search is required to be here to get enabled
+# plugins=(git osx vagrant brew z fzf tmux vagrant-prompt history-substring-searchx)
 
 # zsh plugin config
 autoload -U compinit && compinit
@@ -30,8 +32,8 @@ if [ -e "${ZPLUG_HOME}" ]; then
     zplug "zsh-users/zsh-autosuggestions"
     zplug "zsh-users/zsh-completions"
     zplug "zsh-users/zsh-syntax-highlighting"
-    # If you want to use zsh-syntax-highlighting along with this script, then make sure that you load it before you load this script
-    zplug "zsh-users/zsh-history-substring-search", defer:2
+    ## If you want to use zsh-syntax-highlighting along with this script, then make sure that you load it before you load this script
+    # zplug "zsh-users/zsh-history-substring-search", defer:2
     zplug "agkozak/zsh-z"
     # Install plugins if there are plugins that have not been installed
     if ! zplug check --verbose; then
