@@ -28,11 +28,8 @@
     grb = %C(yellow)%h%Creset %Cgreen(%ad)%Creset %C(bold)<%an>%Creset %C(bold green)%d%Creset %s
 [core]
     pager = less -+FSRX -FRX
-[blame]
-    date = auto:human
 [log]
     decorate = true
-    date = auto:human
 [commit]
     verbose = true
 [color]
