@@ -24,17 +24,19 @@ export ZPLUG_HOME=/usr/local/opt/zplug
 if [ -e "${ZPLUG_HOME}" ]; then
     source $ZPLUG_HOME/init.zsh
     # Override $ZSH_THEME
-    zplug "dracula/zsh", as:theme
+    # zplug "dracula/zsh", as:theme
 
     # Async for zsh, used by pure
     zplug "mafredri/zsh-async", from:github, defer:0
-    # zplug "sindresorhus/pure", use:pure.zsh, from:github, as:theme
+    zplug "sindresorhus/pure", use:pure.zsh, from:github, as:theme
     zplug "zsh-users/zsh-autosuggestions"
     zplug "zsh-users/zsh-completions"
     zplug "zsh-users/zsh-syntax-highlighting"
     ## If you want to use zsh-syntax-highlighting along with this script, then make sure that you load it before you load this script
     # zplug "zsh-users/zsh-history-substring-search", defer:2
     zplug "agkozak/zsh-z"
+    # Supports oh-my-zsh plugins and the like
+    zplug "plugins/git", from:oh-my-zsh
     # Install plugins if there are plugins that have not been installed
     if ! zplug check --verbose; then
         printf "Install? [y/N]: "
