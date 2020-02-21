@@ -1,6 +1,7 @@
 [user]
     name = everbird
     email = stephen.zhuang@gmail.com
+    signingkey = FAA61A2469D5A6B45BCCD2E7E49BC4DB36E758D5
 [alias]
     aa = add --all
     b = branch -vv
@@ -32,8 +33,11 @@
     decorate = true
 [commit]
     verbose = true
+    gpgsign = true
 [color]
     diff = auto
     status = auto
 [include]
     path = local-config
+[gpg]
+    program = /usr/local/bin/gpg
