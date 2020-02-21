@@ -37,6 +37,13 @@ if [ -e "${ZPLUG_HOME}" ]; then
     zplug "agkozak/zsh-z"
     # Supports oh-my-zsh plugins and the like
     zplug "plugins/git", from:oh-my-zsh
+
+    # ssh-multi
+    zplug "everbird/d5f7f9946760e96f6efd676a518cb919", \
+        from:gist, \
+        as:command, \
+        use:ssh-multi.sh
+
     # Install plugins if there are plugins that have not been installed
     if ! zplug check --verbose; then
         printf "Install? [y/N]: "
@@ -85,6 +92,16 @@ export PATH="/usr/local/sbin:$PATH"
 autoload -U compinit && compinit
 
 # Twitter
-alias nest="ssh -A nest.smfc.twitter.com"
+alias nest='ssh -A $(for x in atlc smfc; do echo "nest.$x.twitter.com"; done | fzf)'
+alias nest-smfc="ssh -A nest.smfc.twitter.com"
+alias nest-atlc="ssh -A nest.atlc.twitter.com"
+alias nest-tmux="ssh -A smfc-ahy-29-sr2.corpdc.twitter.com"
 
+# fzf util
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# using ripgrep combined with preview
+# find-in-file - usage: fif <searchTerm>
+fif() {
+    if [ ! "$#" -gt 0 ]; then echo "Need a string to search for!"; return 1; fi
+    rg --files-with-matches --no-messages "$1" | fzf --preview "highlight -O ansi -l {} 2> /dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$1' || rg --ignore-case --pretty --context 10 '$1' {}"
+}
