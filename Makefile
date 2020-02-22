@@ -10,7 +10,7 @@ all: personal
 STOW := stowsh/stowsh
 
 default_packages := zsh tmux spacemacs editorconfig tmux-plugins
-personal_packages := $(default_packages) git
+personal_packages := $(default_packages) git gpg
 work_packages := $(default_packages) git-work netrc
 
 # Autocompletion
