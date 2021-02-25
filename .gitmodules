@@ -7,3 +7,6 @@
 [submodule "bundle/zplug"]
 	path = bundle/zplug
 	url = https://github.com/zplug/zplug
+[submodule "bundle/doom-emacs"]
+	path = bundle/doom-emacs
+	url = https://github.com/hlissner/doom-emacs.git
