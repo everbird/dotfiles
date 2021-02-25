@@ -1,0 +1,1 @@
+../bundle/everbird-dotvim/vimrc

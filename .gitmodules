@@ -10,3 +10,6 @@
 [submodule "bundle/doom-emacs"]
 	path = bundle/doom-emacs
 	url = https://github.com/hlissner/doom-emacs.git
+[submodule "bundle/everbird-dotvim"]
+	path = bundle/everbird-dotvim
+	url = https://github.com/everbird/dotvim.git
