@@ -9,7 +9,7 @@ all: personal
 #. Internal vars
 STOW := stowsh/stowsh
 
-default_packages := zsh tmux spacemacs editorconfig tmux-plugins
+default_packages := zsh tmux spacemacs editorconfig tmux-plugins zplug
 personal_packages := $(default_packages) git gpg
 work_packages := $(default_packages) git-work netrc
 

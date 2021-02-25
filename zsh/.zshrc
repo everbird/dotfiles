@@ -19,8 +19,11 @@ source $ZSH/oh-my-zsh.sh
 # Enable z
 source $ZSH/plugins/z/z.sh
 
+# Rust
+source $HOME/.cargo/env
+
 # zplug
-export ZPLUG_HOME=/usr/local/opt/zplug
+export ZPLUG_HOME=~/.zplug
 if [ -e "${ZPLUG_HOME}" ]; then
     source $ZPLUG_HOME/init.zsh
     # Override $ZSH_THEME
