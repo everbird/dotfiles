@@ -8,6 +8,7 @@
     br = branch
     cb = checkout HEAD -b
     ci = commit
+    cis = commit -S #optional if siging is false
     co = checkout
     di = diff
     dc = diff --cached
@@ -19,6 +20,7 @@
     ll = log --graph --pretty=grb --stat
     lu = log --graph --pretty=grb @{u}..
     lus = log --graph --pretty=grb @{u}.. --stat
+    logs = log --show-signature
     pl = pull
     ph = push
     rb = rebase
@@ -40,4 +42,4 @@
 [include]
     path = local-config
 [gpg]
-    program = /usr/local/bin/gpg
+    program = gpg
