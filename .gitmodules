@@ -13,3 +13,6 @@
 [submodule "bundle/everbird-dotvim"]
 	path = bundle/everbird-dotvim
 	url = https://github.com/everbird/dotvim.git
+[submodule "bundle/ohmyzsh"]
+	path = bundle/ohmyzsh
+	url = https://github.com/ohmyzsh/ohmyzsh.git
