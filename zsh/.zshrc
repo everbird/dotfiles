@@ -69,6 +69,7 @@ fi
 export PATH="$PATH:$HOME/.rvm/bin"
 export PATH="$PATH:$HOME/.gem/ruby/2.1.0/bin"
 
+# TODO: Should be moved to a zsh-work module
 # Twitter MDE installed pdk for puppet
 export PATH="$PATH:/opt/puppetlabs/pdk/bin"
 
