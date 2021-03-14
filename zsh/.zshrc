@@ -19,8 +19,9 @@ source $ZSH/oh-my-zsh.sh
 # Enable z
 source $ZSH/plugins/z/z.sh
 
-# Rust
-source $HOME/.cargo/env
+# TODO
+## Rust
+#source $HOME/.cargo/env
 
 # zplug
 export ZPLUG_HOME=~/.zplug
@@ -68,6 +69,7 @@ fi
 export PATH="$PATH:$HOME/.rvm/bin"
 export PATH="$PATH:$HOME/.gem/ruby/2.1.0/bin"
 
+# TODO: Should be moved to a zsh-work module
 # Twitter MDE installed pdk for puppet
 export PATH="$PATH:/opt/puppetlabs/pdk/bin"
 
@@ -113,3 +115,5 @@ fif() {
 # Without this it may result error like:
 #   gpg: signing failed: Inappropriate ioctl for device
 export GPG_TTY=$(tty)
+
+export PATH="$PATH:$HOME/bin"
