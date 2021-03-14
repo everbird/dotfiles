@@ -2,7 +2,7 @@ export ZSH=~/.oh-my-zsh
 # Only use oh-my-zsh built-in settings here, override later if zplug
 # exists
 ZSH_THEME="robbyrussell"
-plugins=(git osx vagrant brew z fzf tmux vagrant-prompt)
+plugins=(git osx vagrant brew z fzf tmux vagrant-prompt kubectl)
 ## history-substring-search is required to be here to get enabled
 # plugins=(git osx vagrant brew z fzf tmux vagrant-prompt history-substring-searchx)
 
