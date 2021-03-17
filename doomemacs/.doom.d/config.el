@@ -57,6 +57,7 @@
 (use-package org-journal
   :config
   (setq org-journal-dir "~/Dropbox/org/journal")
+  (setq org-journal-file-type 'daily)
 )
 (setq dashboard-banner-logo-title "Welcome to Emacs Dashboard")
 (use-package! puppet-mode
