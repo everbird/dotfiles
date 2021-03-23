@@ -116,4 +116,4 @@ fif() {
 #   gpg: signing failed: Inappropriate ioctl for device
 export GPG_TTY=$(tty)
 
-export PATH="$PATH:$HOME/bin"
+export PATH="$PATH:$HOME/bin:$HOME/.local/bin"
