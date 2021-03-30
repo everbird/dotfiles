@@ -9,10 +9,10 @@ all: personal
 #. Internal vars
 STOW := stowsh/stowsh
 
-default_packages := zsh tmux spacemacs editorconfig tmux-plugins zplug doomemacs dotvim ohmyzsh goldendict resources ohmyvocabulary
-personal_packages := $(default_packages) git gpg
-personal_ubuntu_packages := $(default_packages) git gpg-ubuntu
-work_packages := $(default_packages) git-work netrc
+default_packages := zsh tmux spacemacs editorconfig tmux-plugins zplug doomemacs dotvim ohmyzsh goldendict resources
+personal_packages := $(default_packages) git gpg ohmyvocabulary
+personal_ubuntu_packages := $(default_packages) git gpg-ubuntu ohmyvocabulary-ubuntu
+work_packages := $(default_packages) git-work netrc ohmyvocabulary
 
 # Autocompletion
 personal: install-personal
