@@ -16,3 +16,6 @@
 [submodule "bundle/ohmyzsh"]
 	path = bundle/ohmyzsh
 	url = https://github.com/ohmyzsh/ohmyzsh.git
+[submodule "bundle/ohmyvocabulary"]
+	path = bundle/ohmyvocabulary
+	url = https://github.com/everbird/ohmyvocabulary.git
