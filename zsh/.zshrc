@@ -2,12 +2,14 @@ export ZSH=~/.oh-my-zsh
 # Only use oh-my-zsh built-in settings here, override later if zplug
 # exists
 ZSH_THEME="robbyrussell"
-plugins=(git osx vagrant brew z fzf tmux vagrant-prompt kubectl)
+plugins=(git macos vagrant brew z fzf tmux vagrant-prompt kubectl)
 ## history-substring-search is required to be here to get enabled
 # plugins=(git osx vagrant brew z fzf tmux vagrant-prompt history-substring-searchx)
 
 # zsh plugin config
 autoload -U compinit && compinit
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 export VISUAL='/usr/bin/vim'
 export EDITOR="$VISUAL"
@@ -15,9 +17,6 @@ export EDITOR="$VISUAL"
 # User configuration
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 source $ZSH/oh-my-zsh.sh
-
-# Enable z
-source $ZSH/plugins/z/z.sh
 
 # TODO
 ## Rust
@@ -116,4 +115,5 @@ fif() {
 #   gpg: signing failed: Inappropriate ioctl for device
 export GPG_TTY=$(tty)
 
-export PATH="$PATH:$HOME/bin:$HOME/.local/bin"
+export PATH="$PATH:$HOME/bin:$HOME/.local/bin:/opt/homebrew/bin"
+alias ctags=/opt/homebrew/bin/ctags
