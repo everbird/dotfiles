@@ -68,3 +68,27 @@
 ;(setq plantuml-default-exec-mode 'jar)
 ;;(add-to-list
 ;;  'org-src-lang-modes '("plantuml" . plantuml))
+
+(setq straight-repository-flavors '(melpa gnu-elpa-mirror emacsmirror-mirror))
+
+(after! grip-mode
+  (advice-add 'grip-start-process :before
+              (lambda ()
+                (let ((old-proc (get-process "grip-6419")))
+                  (when old-proc
+                    (delete-process old-proc)
+                    (sleep-for 0.5)))
+                (setq grip--port 6419)))
+  (defun +grip-start-process-host-a (orig-fun name &rest args)
+    (if (string-prefix-p "grip-" name)
+        (let* ((last-arg (car (last args)))
+               (new-args (append (butlast args) (list (concat "0.0.0.0:" last-arg)))))
+          (apply orig-fun name new-args))
+      (apply orig-fun name args)))
+  (advice-add 'start-process :around #'+grip-start-process-host-a))
+
+
+
+
+
+

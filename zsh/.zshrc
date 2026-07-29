@@ -1,3 +1,10 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 export ZSH=~/.oh-my-zsh
 # Only use oh-my-zsh built-in settings here, override later if zplug
 # exists
@@ -31,7 +38,8 @@ if [ -e "${ZPLUG_HOME}" ]; then
 
     # Async for zsh, used by pure
     zplug "mafredri/zsh-async", from:github, defer:0
-    zplug "sindresorhus/pure", use:pure.zsh, from:github, as:theme
+    #zplug "sindresorhus/pure", use:pure.zsh, from:github, as:theme
+    zplug "romkatv/powerlevel10k", as:theme, depth:1
     zplug "zsh-users/zsh-autosuggestions"
     zplug "zsh-users/zsh-completions"
     zplug "zsh-users/zsh-syntax-highlighting"
@@ -117,3 +125,6 @@ export GPG_TTY=$(tty)
 
 export PATH="$PATH:$HOME/bin:$HOME/.local/bin:/opt/homebrew/bin"
 alias ctags=/opt/homebrew/bin/ctags
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
