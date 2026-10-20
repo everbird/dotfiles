@@ -1,43 +1,20 @@
-#. Dotfile Manager -={
+.PHONY: all link install bootstrap status unlink clean
 
-#. INSTRUCTIONS -={
-#.   TBD
-#. }=-
+all: bootstrap link
 
-all: personal
+link:
+	@bash ./install.sh link
 
-#. Internal vars
-STOW := stowsh/stowsh
+install: all
 
-default_packages := zsh tmux spacemacs editorconfig tmux-plugins zplug doomemacs dotvim ohmyzsh goldendict resources
-personal_packages := $(default_packages) git gpg ohmyvocabulary
-personal_ubuntu_packages := $(default_packages) git gpg-ubuntu ohmyvocabulary-ubuntu
-work_packages := $(default_packages) git-work netrc ohmyvocabulary
+bootstrap:
+	@bash ./install.sh bootstrap
 
-# Autocompletion
-personal: install-personal
-work: install-work
+status:
+	@bash ./install.sh status
 
-# Dynamic install/uninstall -= {
-
-install-%:
-	@echo "Installing profile: $*"
-	${STOW} -vv -t ~ ${$*_packages}
-
-uninstall-%:
-	@echo "Uninstalling profile: $*"
-	${STOW} -vv -D -t ~ ${$*_packages}
-
-#. }=-
-
-list:
-	find ~ -name ".*" -maxdepth 1 -ls | column -t
-
-link-list:
-	find ~ -maxdepth 1 -type l -ls | column -t
-llist: link-list
+unlink:
+	@bash ./install.sh unlink
 
 clean:
 	find . -name "*~" -o -name "*.swp" -o -name "*.swo" | xargs rm -rf
-
-#. }=-
