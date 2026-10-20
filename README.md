@@ -25,11 +25,11 @@ git clone https://github.com/everbird/dotfiles.git ~/.dotfiles && make -C ~/.dot
 
 > **这行命令会自动完成**：
 > 1. 克隆仓库到 `~/.dotfiles`（若通过 `curl` 执行）；
-> 2. 将 5 个核心 Zsh 插件安装至 `~/.local/share/zsh/plugins/`；
-> 3. 将 `everbird/dotvim` 克隆至 `~/.everbird-dotvim` 并软链 `~/.vim`、`~/.vimrc`；
-> 4. 将 Tmux TPM 安装至 `~/.tmux/plugins/tpm`；
-> 5. 将 Doom Emacs 克隆至 `~/.emacs.d`（且 `~/.emacs.d/bin` 已自动加入 `$PATH`，可直接运行 `doom install` / `doom sync`）；
-> 6. 将所有配置文件软链到 `$HOME`（若存在同名非软链文件，自动备份为 `*.bak.<时间戳>`）。
+> 2. 将所有配置文件软链到 `$HOME`（若存在同名非软链文件，自动备份为 `*.bak.<时间戳>`）；
+> 3. 将 5 个核心 Zsh 插件安装至 `~/.local/share/zsh/plugins/`；
+> 4. 将 `everbird/dotvim` 克隆至 `~/.everbird-dotvim` 并调用其 `bootstrap.sh` 初始化 Vim 与 Neovim（检测到 `git` 与 `vim`/`nvim` 时默认安装 `--full` 完备插件集，若失败或处于极简环境自动回退 `--basic`，也可通过 `DOTVIM_PROFILE=basic make` 手动指定）；
+> 5. 将 Tmux TPM 安装至 `~/.tmux/plugins/tpm`；
+> 6. 将 Doom Emacs 克隆至 `~/.emacs.d`，并在系统已安装 `emacs` 时自动执行 `doom sync`（且 `~/.emacs.d/bin` 已自动加入 `$PATH`）。
 
 ### 2. 已安装旧版 dotfiles 的机器：平滑升级为新版
 如果机器上之前已经装过老版本（带 `stowsh` 和 `bundle/*` 子模块）的 `~/.dotfiles`，只需执行：

@@ -194,17 +194,36 @@ do_bootstrap() {
     fi
   done
 
-  # 2. Vim (everbird-dotvim)
+  # 2. Vim / Neovim (everbird-dotvim)
   local vim_dir="$HOME/.everbird-dotvim"
   if [[ ! -d "$vim_dir" ]]; then
     info "Cloning everbird/dotvim into $vim_dir..."
-    git clone --recursive https://github.com/everbird/dotvim.git "$vim_dir"
+    git clone https://github.com/everbird/dotvim.git "$vim_dir"
   else
     ok "everbird-dotvim already present ($vim_dir)"
   fi
-  link_file "$vim_dir" "$HOME/.vim"
-  link_file "$vim_dir/vimrc" "$HOME/.vimrc"
-  [[ -f "$vim_dir/gvimrc" ]] && link_file "$vim_dir/gvimrc" "$HOME/.gvimrc"
+  if [[ -f "$vim_dir/bootstrap.sh" ]]; then
+    local vim_profile="${DOTVIM_PROFILE:-}"
+    if [[ -z "$vim_profile" ]]; then
+      if command -v git >/dev/null 2>&1 && { command -v vim >/dev/null 2>&1 || command -v nvim >/dev/null 2>&1; }; then
+        vim_profile="full"
+      else
+        vim_profile="basic"
+      fi
+    fi
+    info "Initializing everbird-dotvim (profile: $vim_profile)..."
+    if ! sh "$vim_dir/bootstrap.sh" "--$vim_profile" --checkout "$vim_dir"; then
+      if [[ "$vim_profile" == "full" ]]; then
+        warn "Full dotvim profile failed; falling back to --basic..."
+        sh "$vim_dir/bootstrap.sh" --basic --checkout "$vim_dir"
+      fi
+    fi
+    ok "Initialized everbird-dotvim"
+  else
+    link_file "$vim_dir" "$HOME/.vim"
+    link_file "$vim_dir/vimrc" "$HOME/.vimrc"
+    [[ -f "$vim_dir/gvimrc" ]] && link_file "$vim_dir/gvimrc" "$HOME/.gvimrc"
+  fi
 
   # 3. Tmux Plugin Manager (TPM)
   local tpm_dir="$HOME/.tmux/plugins/tpm"
@@ -273,6 +292,18 @@ do_bootstrap() {
   else
     ok "Doom Emacs already installed ($emacs_dir)"
   fi
+
+  if command -v emacs >/dev/null 2>&1 && [[ -x "$emacs_dir/bin/doom" ]]; then
+    info "Synchronizing Doom Emacs ('doom sync')..."
+    if [[ -t 0 ]]; then
+      "$emacs_dir/bin/doom" sync
+    else
+      yes | "$emacs_dir/bin/doom" sync
+    fi
+    ok "Doom Emacs synchronized"
+  else
+    info "Emacs binary not installed on this machine, skipping 'doom sync'"
+  fi
 }
 
 do_status() {
@@ -295,6 +326,10 @@ do_status() {
   done
   check_link "vim (.vim)"   "$HOME/.vim"   "$HOME/.everbird-dotvim"
   check_link "vim (.vimrc)" "$HOME/.vimrc" "$HOME/.everbird-dotvim/vimrc"
+  check_link "nvim (.config/nvim)" "${XDG_CONFIG_HOME:-$HOME/.config}/nvim" "$HOME/.everbird-dotvim"
+  if [[ -f "$HOME/.dotvim-profile" ]]; then
+    printf "  %-28s ${GREEN}INSTALLED${NC} (profile: %s)\n" "dotvim:profile" "$(head -n 1 "$HOME/.dotvim-profile")"
+  fi
   if [[ -d "$HOME/.tmux/plugins/tpm" ]]; then
     printf "  %-28s ${GREEN}INSTALLED${NC} (%s)\n" "tmux:tpm" "$HOME/.tmux/plugins/tpm"
   else
@@ -320,8 +355,8 @@ do_unlink() {
 cmd="${1:-all}"
 case "$cmd" in
   all)
-    do_bootstrap
     do_link
+    do_bootstrap
     ;;
   link|install)
     do_link
