@@ -168,8 +168,23 @@ alias g=git
 alias vi=vim
 alias pyhftp="python3 -m http.server"
 
+# Zoom - enterprise rag
+export DOCKER_SECRET_PYTHON=~/.secrets/python.repo
+export DOCKER_SECRET_GO=~/.secrets/golang.repo
+
 # ==============================================================================
 # 6. Prompt Config & Local Machine Overrides
 # ==============================================================================
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+# Zoom kubectl zcp plugin
+export KUBECONFIG='~/.kube/zcp-eng.yaml'
+
+# Added by AgentBox CLI installer
+export PATH="/Users/stephenzhuang/.agentbox/bin:$PATH"
+
+# zbr-cli
+export PATH="${HOME}/.zbr/bin:${PATH}"
+
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 [[ ! -f ~/.zshrc.local ]] || source ~/.zshrc.local
