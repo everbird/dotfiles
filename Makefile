@@ -1,6 +1,6 @@
 .PHONY: all link install bootstrap status unlink clean
 
-all: bootstrap link
+all: link bootstrap
 
 link:
 	@bash ./install.sh link

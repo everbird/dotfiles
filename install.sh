@@ -273,6 +273,18 @@ do_bootstrap() {
   else
     ok "Doom Emacs already installed ($emacs_dir)"
   fi
+
+  if command -v emacs >/dev/null 2>&1 && [[ -x "$emacs_dir/bin/doom" ]]; then
+    info "Synchronizing Doom Emacs ('doom sync')..."
+    if [[ -t 0 ]]; then
+      "$emacs_dir/bin/doom" sync
+    else
+      yes | "$emacs_dir/bin/doom" sync
+    fi
+    ok "Doom Emacs synchronized"
+  else
+    info "Emacs binary not installed on this machine, skipping 'doom sync'"
+  fi
 }
 
 do_status() {
@@ -320,8 +332,8 @@ do_unlink() {
 cmd="${1:-all}"
 case "$cmd" in
   all)
-    do_bootstrap
     do_link
+    do_bootstrap
     ;;
   link|install)
     do_link
