@@ -3,12 +3,57 @@
 个人跨平台（macOS / Linux）配置文件仓库，遵循 **实用、简单、清晰、零框架冗余** 原则。
 
 - **所见即所得**：通过软链（Symlink）直接映射 `$HOME`，修改 `~/.zshrc` 即直接修改仓库文件。
-- **零外部管理依赖**：不依赖 `stow`、`chezmoi` 或 Git Submodule，内置 [`install.sh`](./install.sh) 一键完成依赖拉取、冲突自动备份与软链维护。
+- **零外部管理依赖**：不依赖 `stow`、`chezmoi` 或 Git Submodule，内置 [`install.sh`](./install.sh) 一键完成依赖拉取、冲突自动备份、旧软链清理与新软链维护。
 - **极速 Zsh（~50ms 启动）**：基于原生 Zsh 配置 + 直连 `powerlevel10k` 与 4 个核心插件，告别 `oh-my-zsh` / `zplug` 启动卡顿。
 
 ---
 
-## 一、 目录结构
+## 一、 快速开始（全新安装 vs 旧版升级）
+
+### 1. 全新机器：一行命令安装所有
+在一台从未装过 dotfiles 的新机器上，只需有 `git` 和 `curl`，直接执行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/everbird/dotfiles/master/install.sh | bash
+```
+
+或者手动克隆到任意目录后执行 `make`：
+
+```bash
+git clone https://github.com/everbird/dotfiles.git ~/.dotfiles && make -C ~/.dotfiles
+```
+
+> **这行命令会自动完成**：
+> 1. 克隆仓库到 `~/.dotfiles`（若通过 `curl` 执行）；
+> 2. 将 5 个核心 Zsh 插件安装至 `~/.local/share/zsh/plugins/`；
+> 3. 将 `everbird/dotvim` 克隆至 `~/.everbird-dotvim` 并软链 `~/.vim`、`~/.vimrc`；
+> 4. 将 Tmux TPM 安装至 `~/.tmux/plugins/tpm`；
+> 5. 将所有配置文件软链到 `$HOME`（若存在同名非软链文件，自动备份为 `*.bak.<时间戳>`）。
+
+### 2. 已安装旧版 dotfiles 的机器：平滑升级为新版
+如果机器上之前已经装过老版本（带 `stowsh` 和 `bundle/*` 子模块）的 `~/.dotfiles`，只需执行：
+
+```bash
+cd ~/.dotfiles && git pull && make
+```
+
+> **升级过程会自动处理兼容与清理**：
+> 1. **无缝迁移**：自动将旧 `~/.zplug/repos/` 下的 Zsh 插件迁移到 `~/.local/share/zsh/plugins/`，将旧 `bundle/tmux-tpm` 迁移到 `~/.tmux/plugins/tpm`；
+> 2. **重定向软链**：将 `~/.zshrc`、`~/.gitconfig`、`~/.tmux.conf`、`~/.doom.d/*` 等全部切换到最新结构；
+> 3. **清理历史遗留软链**：自动移除 `$HOME` 下已废弃的旧软链（`~/.oh-my-zsh`、`~/.zplug`、`~/.spacemacs`、`~/.ohmyvocabularyrc`、`~/bin/{pex,mdict.pex,omv,tosink}`）。
+> 4. **清理旧子模块残留目录（可选）**：
+>    - ⚠️ **注意**：如果该机器上的 `~/.emacs.d` 仍然是指向 `~/.dotfiles/bundle/doom-emacs` 的软链，请先将它移出为独立目录：
+>      ```bash
+>      rm ~/.emacs.d && mv ~/.dotfiles/bundle/doom-emacs ~/.emacs.d
+>      ```
+>    - 随后即可放心清理旧仓库里残留的未追踪子模块目录：
+>      ```bash
+>      git -C ~/.dotfiles clean -ffd
+>      ```
+
+---
+
+## 二、 目录结构
 
 ```text
 dotfiles/
@@ -35,30 +80,21 @@ dotfiles/
 
 ---
 
-## 二、 日常使用命令
+## 三、 日常维护命令
 
 在仓库根目录下直接通过 `make` 操作：
 
 ```bash
-# 1. 一键完整安装（新机器初始化推荐：自动拉取外部插件 + 创建全部软链）
-make
-
-# 2. 仅更新软链（新增或调整配置文件路径后执行，已有同名非软链文件会自动备份为 *.bak.<时间戳>）
-make link
-
-# 3. 仅安装/检查外部插件框架（Zsh 插件、everbird-dotvim、Tmux TPM）
-make bootstrap
-
-# 4. 检查所有软链与外部插件状态（OK / DRIFTED / MISSING）
-make status
-
-# 5. 卸载所有指向本仓库的软链
-make unlink
+make            # 完整执行 bootstrap + link（并清理废弃旧软链）
+make link       # 仅更新软链（新增或调整配置文件路径后执行）
+make bootstrap  # 仅安装/检查外部插件框架（Zsh 插件、everbird-dotvim、Tmux TPM）
+make status     # 检查所有软链与外部插件状态（OK / DRIFTED / MISSING）
+make unlink     # 卸载所有指向本仓库的软链
 ```
 
 ---
 
-## 三、 如何添加新的配置
+## 四、 如何添加新的配置
 
 所有软链映射都集中在 [`install.sh`](./install.sh) 顶部的 `DOTFILE_LINKS` 数组中，添加新配置只需 **2 步**：
 
@@ -94,7 +130,7 @@ esac
 
 ---
 
-## 四、 本机私有配置与多环境隔离（不入库）
+## 五、 本机私有配置与多环境隔离（不入库）
 
 为了避免把机器私有路径、Token 或公司内网配置提交到公开仓库，支持以下本地覆盖文件（均已被 `.gitignore` 忽略）：
 

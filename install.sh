@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Support `curl -fsSL https://raw.githubusercontent.com/everbird/dotfiles/master/install.sh | bash`
+if [[ -z "${BASH_SOURCE[0]:-}" ]] || [[ ! -f "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/zsh/.zshrc" ]]; then
+  DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+  if [[ ! -d "$DOTFILES_DIR/.git" ]]; then
+    echo "[INFO] Cloning everbird/dotfiles into $DOTFILES_DIR..."
+    git clone https://github.com/everbird/dotfiles.git "$DOTFILES_DIR"
+  else
+    echo "[INFO] Updating existing repository at $DOTFILES_DIR..."
+    git -C "$DOTFILES_DIR" pull --ff-only
+  fi
+  exec bash "$DOTFILES_DIR/install.sh" "${@:-all}"
+fi
+
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="${HOME}"
 BACKUP_SUFFIX="bak.$(date +%Y%m%d%H%M%S)"
@@ -38,6 +51,19 @@ ZSH_PLUGINS=(
   "zsh-users/zsh-autosuggestions"
   "zsh-users/zsh-syntax-highlighting"
   "agkozak/zsh-z"
+)
+
+# Obsolete symlinks from the legacy dotfiles layout to clean up automatically
+LEGACY_SYMLINKS=(
+  ".oh-my-zsh"
+  ".zplug"
+  ".spacemacs"
+  ".ohmyvocabularyrc"
+  ".goldendict/config"
+  "bin/pex"
+  "bin/mdict.pex"
+  "bin/omv"
+  "bin/tosink"
 )
 
 # ==============================================================================
@@ -95,6 +121,20 @@ unlink_file() {
   fi
 }
 
+cleanup_legacy_symlinks() {
+  for rel in "${LEGACY_SYMLINKS[@]}"; do
+    local dst="$TARGET_DIR/$rel"
+    if [[ -L "$dst" ]]; then
+      local target
+      target="$(readlink "$dst")"
+      if [[ "$target" == *"dotfiles"* || "$target" == *"bundle/"* ]]; then
+        rm -f "$dst"
+        ok "Removed legacy symlink: $dst ($target)"
+      fi
+    fi
+  done
+}
+
 check_link() {
   local label="$1"
   local dst="$2"
@@ -129,6 +169,8 @@ do_link() {
     local dst_rel="${entry#*:}"
     link_file "$DOTFILES_DIR/$src_rel" "$TARGET_DIR/$dst_rel"
   done
+
+  cleanup_legacy_symlinks
 }
 
 do_bootstrap() {
