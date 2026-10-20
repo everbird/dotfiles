@@ -23,6 +23,8 @@ fi
 path=(
   "$HOME/bin"
   "$HOME/.local/bin"
+  "$HOME/.emacs.d/bin"
+  "$HOME/.config/emacs/bin"
   /usr/local/bin
   /usr/local/sbin
   $path

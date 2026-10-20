@@ -28,7 +28,8 @@ git clone https://github.com/everbird/dotfiles.git ~/.dotfiles && make -C ~/.dot
 > 2. 将 5 个核心 Zsh 插件安装至 `~/.local/share/zsh/plugins/`；
 > 3. 将 `everbird/dotvim` 克隆至 `~/.everbird-dotvim` 并软链 `~/.vim`、`~/.vimrc`；
 > 4. 将 Tmux TPM 安装至 `~/.tmux/plugins/tpm`；
-> 5. 将所有配置文件软链到 `$HOME`（若存在同名非软链文件，自动备份为 `*.bak.<时间戳>`）。
+> 5. 将 Doom Emacs 克隆至 `~/.emacs.d`（且 `~/.emacs.d/bin` 已自动加入 `$PATH`，可直接运行 `doom install` / `doom sync`）；
+> 6. 将所有配置文件软链到 `$HOME`（若存在同名非软链文件，自动备份为 `*.bak.<时间戳>`）。
 
 ### 2. 已安装旧版 dotfiles 的机器：平滑升级为新版
 如果机器上之前已经装过老版本（带 `stowsh` 和 `bundle/*` 子模块）的 `~/.dotfiles`，只需执行：
@@ -38,18 +39,16 @@ cd ~/.dotfiles && git pull && make
 ```
 
 > **升级过程会自动处理兼容与清理**：
-> 1. **无缝迁移**：自动将旧 `~/.zplug/repos/` 下的 Zsh 插件迁移到 `~/.local/share/zsh/plugins/`，将旧 `bundle/tmux-tpm` 迁移到 `~/.tmux/plugins/tpm`；
+> 1. **无缝迁移外部框架**：
+>    - 自动将旧 `~/.zplug/repos/` 下的 Zsh 插件迁移到 `~/.local/share/zsh/plugins/`；
+>    - 自动将旧 `bundle/tmux-tpm` 迁移到 `~/.tmux/plugins/tpm`；
+>    - **自动将旧 `~/.emacs.d -> .dotfiles/bundle/doom-emacs` 软链解耦迁移为独立的 `~/.emacs.d` Git 仓库**（完整保留已编译的 `.local` 包缓存；若旧目录已被清理则自动重新克隆 Doom Emacs 并恢复 `.local`）；
 > 2. **重定向软链**：将 `~/.zshrc`、`~/.gitconfig`、`~/.tmux.conf`、`~/.doom.d/*` 等全部切换到最新结构；
 > 3. **清理历史遗留软链**：自动移除 `$HOME` 下已废弃的旧软链（`~/.oh-my-zsh`、`~/.zplug`、`~/.spacemacs`、`~/.ohmyvocabularyrc`、`~/bin/{pex,mdict.pex,omv,tosink}`）。
-> 4. **清理旧子模块残留目录（可选）**：
->    - ⚠️ **注意**：如果该机器上的 `~/.emacs.d` 仍然是指向 `~/.dotfiles/bundle/doom-emacs` 的软链，请先将它移出为独立目录：
->      ```bash
->      rm ~/.emacs.d && mv ~/.dotfiles/bundle/doom-emacs ~/.emacs.d
->      ```
->    - 随后即可放心清理旧仓库里残留的未追踪子模块目录：
->      ```bash
->      git -C ~/.dotfiles clean -ffd
->      ```
+> 4. **清理旧子模块残留目录（可选）**：升级完成后，可清理旧仓库下未追踪的 `bundle/` 残留：
+>    ```bash
+>    git -C ~/.dotfiles clean -ffd
+>    ```
 
 ---
 
