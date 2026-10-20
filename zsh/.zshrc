@@ -1,130 +1,173 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
+# ==============================================================================
+# 1. Powerlevel10k Instant Prompt (keep at the very top of ~/.zshrc)
+# ==============================================================================
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export ZSH=~/.oh-my-zsh
-# Only use oh-my-zsh built-in settings here, override later if zplug
-# exists
-ZSH_THEME="robbyrussell"
-plugins=(git macos vagrant brew z fzf tmux vagrant-prompt kubectl)
-## history-substring-search is required to be here to get enabled
-# plugins=(git osx vagrant brew z fzf tmux vagrant-prompt history-substring-searchx)
+# ==============================================================================
+# 2. Environment & Cross-Platform PATH
+# ==============================================================================
+typeset -U path PATH
 
-# zsh plugin config
-autoload -U compinit && compinit
+# macOS Homebrew
+if [[ "$OSTYPE" == darwin* ]]; then
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
+  fi
+  [[ -x /opt/homebrew/bin/ctags ]] && alias ctags="/opt/homebrew/bin/ctags"
+fi
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+path=(
+  "$HOME/bin"
+  "$HOME/.local/bin"
+  /usr/local/bin
+  /usr/local/sbin
+  $path
+)
 
-export VISUAL='/usr/bin/vim'
+export VISUAL="vim"
 export EDITOR="$VISUAL"
+export GPG_TTY=$TTY
 
-# User configuration
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-source $ZSH/oh-my-zsh.sh
-
-# TODO
-## Rust
-#source $HOME/.cargo/env
-
-# zplug
-export ZPLUG_HOME=~/.zplug
-if [ -e "${ZPLUG_HOME}" ]; then
-    source $ZPLUG_HOME/init.zsh
-    # Override $ZSH_THEME
-    # zplug "dracula/zsh", as:theme
-
-    # Async for zsh, used by pure
-    zplug "mafredri/zsh-async", from:github, defer:0
-    #zplug "sindresorhus/pure", use:pure.zsh, from:github, as:theme
-    zplug "romkatv/powerlevel10k", as:theme, depth:1
-    zplug "zsh-users/zsh-autosuggestions"
-    zplug "zsh-users/zsh-completions"
-    zplug "zsh-users/zsh-syntax-highlighting"
-    ## If you want to use zsh-syntax-highlighting along with this script, then make sure that you load it before you load this script
-    # zplug "zsh-users/zsh-history-substring-search", defer:2
-    zplug "agkozak/zsh-z"
-    # Supports oh-my-zsh plugins and the like
-    zplug "plugins/git", from:oh-my-zsh
-
-    # ssh-multi
-    zplug "everbird/d5f7f9946760e96f6efd676a518cb919", \
-        from:gist, \
-        as:command, \
-        use:ssh-multi.sh
-
-    # Install plugins if there are plugins that have not been installed
-    if ! zplug check --verbose; then
-        printf "Install? [y/N]: "
-        if read -q; then
-            echo; zplug install
-        fi
-    fi
-    # Then, source plugins and add commands to $PATH
-    zplug load --verbose
-
-    if zplug check zsh-users/zsh-history-substring-search; then
-        bindkey '^[[A' history-substring-search-up
-        bindkey '^[[B' history-substring-search-down
-    fi
+# Pyenv (lazy/conditional load)
+if [[ -d "$HOME/.pyenv" ]]; then
+  export PYENV_ROOT="$HOME/.pyenv"
+  path=("$PYENV_ROOT/bin" $path)
+  command -v pyenv >/dev/null 2>&1 && eval "$(pyenv init -)"
 fi
 
+# Rust / Cargo
+[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
-export PATH="$PATH:$HOME/.gem/ruby/2.1.0/bin"
+# ==============================================================================
+# 3. Core Zsh Options & Sensible Defaults (Replaces oh-my-zsh lib)
+# ==============================================================================
+# History
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt EXTENDED_HISTORY          # Record timestamp in history
+setopt HIST_EXPIRE_DUPS_FIRST    # Expire duplicate entries first
+setopt HIST_IGNORE_DUPS          # Do not record consecutive duplicate entries
+setopt HIST_IGNORE_ALL_DUPS      # Delete old duplicate entry when new one is added
+setopt HIST_IGNORE_SPACE         # Do not record commands starting with a space
+setopt HIST_FIND_NO_DUPS         # Do not display duplicates when searching history
+setopt HIST_VERIFY               # Show expanded history command before executing
+setopt SHARE_HISTORY             # Share history across all active terminal sessions
 
-# TODO: Should be moved to a zsh-work module
-# Twitter MDE installed pdk for puppet
-export PATH="$PATH:/opt/puppetlabs/pdk/bin"
+# Navigation & Interaction
+setopt AUTO_CD                   # Type directory name to cd into it
+setopt AUTO_PUSHD                # cd pushes old directory onto directory stack
+setopt PUSHD_IGNORE_DUPS         # Don't push duplicate directories onto stack
+setopt PUSHD_SILENT              # Do not print directory stack after pushd/popd
+setopt INTERACTIVE_COMMENTS      # Allow # comments in interactive shell
+WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
-# From pyenv installed by brew
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init -)"
+# Keybindings (Emacs style + Up/Down prefix history search)
+bindkey -e
+autoload -U up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
+bindkey '^[OA' up-line-or-beginning-search
+bindkey '^[OB' down-line-or-beginning-search
+
+# ==============================================================================
+# 4. Lightweight Plugin Loader & Completion System
+# ==============================================================================
+ZSH_PLUGIN_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
+
+_zsh_ensure_plugin() {
+  local repo="$1"
+  local name="${repo#*/}"
+  local dir="$ZSH_PLUGIN_DIR/$name"
+  if [[ ! -d "$dir" ]]; then
+    mkdir -p "$ZSH_PLUGIN_DIR"
+    echo "[zsh] Installing $repo..."
+    git clone --depth 1 "https://github.com/$repo.git" "$dir" >/dev/null 2>&1
+  fi
+}
+
+# Pre-completion plugin: zsh-completions
+_zsh_ensure_plugin "zsh-users/zsh-completions"
+[[ -d "$ZSH_PLUGIN_DIR/zsh-completions/src" ]] && fpath=("$ZSH_PLUGIN_DIR/zsh-completions/src" $fpath)
+
+# Completion system (single cached compinit, full rebuild at most once every 24h)
+autoload -Uz compinit
+() {
+  setopt localoptions extendedglob
+  local zcompdump="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump-${ZSH_VERSION}"
+  mkdir -p "${zcompdump:h}"
+  if [[ ! -f "$zcompdump" || -n "$zcompdump"(#qN.mh+24) ]]; then
+    compinit -d "$zcompdump"
+  else
+    compinit -C -d "$zcompdump"
+  fi
+}
+
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' special-dirs true
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompcache"
+
+# Theme & Core Plugins
+_zsh_ensure_plugin "romkatv/powerlevel10k"
+[[ -f "$ZSH_PLUGIN_DIR/powerlevel10k/powerlevel10k.zsh-theme" ]] && \
+  source "$ZSH_PLUGIN_DIR/powerlevel10k/powerlevel10k.zsh-theme"
+
+_zsh_ensure_plugin "agkozak/zsh-z"
+[[ -f "$ZSH_PLUGIN_DIR/zsh-z/zsh-z.plugin.zsh" ]] && \
+  source "$ZSH_PLUGIN_DIR/zsh-z/zsh-z.plugin.zsh"
+
+_zsh_ensure_plugin "zsh-users/zsh-autosuggestions"
+[[ -f "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
+  source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
+
+# Syntax highlighting must be sourced last among plugins
+_zsh_ensure_plugin "zsh-users/zsh-syntax-highlighting"
+[[ -f "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
+  source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
+# ==============================================================================
+# 5. FZF, Aliases & Functions
+# ==============================================================================
+[[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+
+# Find-in-file using ripgrep + fzf preview
+fif() {
+  if [[ "$#" -eq 0 ]]; then
+    echo "Usage: fif <search-term>"
+    return 1
+  fi
+  rg --files-with-matches --no-messages "$1" | \
+    fzf --preview "highlight -O ansi -l {} 2>/dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$1' || rg --ignore-case --pretty --context 10 '$1' {}"
+}
+
+# Colorized ls & grep
+if [[ "$OSTYPE" == darwin* ]]; then
+  export CLICOLOR=1
+  alias ls='ls -G'
+else
+  alias ls='ls --color=auto'
 fi
+alias grep='grep --color=auto'
+alias ll='ls -lah'
+alias la='ls -A'
 
 # Shortcuts
 alias v=vagrant
 alias m=make
 alias g=git
 alias vi=vim
+alias pyhftp="python3 -m http.server"
 
-# Tools
-alias pyhftp="python -m SimpleHTTPServer"
-alias pyfftp="python ~/bin/pyfftp.py"
-
-# Mars
-alias mars="java -jar ~/bin/mars.jar"
-
-export PATH="/usr/local/sbin:$PATH"
-autoload -U compinit && compinit
-
-# Twitter
-alias nest='ssh -A $(for x in atlc smfc; do echo "nest.$x.twitter.com"; done | fzf)'
-alias nest-smfc="ssh -A nest.smfc.twitter.com"
-alias nest-atlc="ssh -A nest.atlc.twitter.com"
-alias nest-tmux="ssh -A smfc-ahy-29-sr2.corpdc.twitter.com"
-
-# fzf util
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-# using ripgrep combined with preview
-# find-in-file - usage: fif <searchTerm>
-fif() {
-    if [ ! "$#" -gt 0 ]; then echo "Need a string to search for!"; return 1; fi
-    rg --files-with-matches --no-messages "$1" | fzf --preview "highlight -O ansi -l {} 2> /dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$1' || rg --ignore-case --pretty --context 10 '$1' {}"
-}
-
-# GPG
-# Without this it may result error like:
-#   gpg: signing failed: Inappropriate ioctl for device
-export GPG_TTY=$(tty)
-
-export PATH="$PATH:$HOME/bin:$HOME/.local/bin:/opt/homebrew/bin"
-alias ctags=/opt/homebrew/bin/ctags
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+# ==============================================================================
+# 6. Prompt Config & Local Machine Overrides
+# ==============================================================================
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+[[ ! -f ~/.zshrc.local ]] || source ~/.zshrc.local

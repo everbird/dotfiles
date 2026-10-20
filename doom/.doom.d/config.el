@@ -87,8 +87,18 @@
       (apply orig-fun name args)))
   (advice-add 'start-process :around #'+grip-start-process-host-a))
 
+;; OSC 52 clipboard support for terminal frames (herdr / tmux / ssh)
+(defun +osc52-copy (text &optional _push)
+  "Copy TEXT to system clipboard via OSC 52 escape sequences in terminal frames."
+  (unless (display-graphic-p)
+    (let* ((bytes (encode-coding-string text 'utf-8-unix))
+           (base64 (base64-encode-string bytes t)))
+      ;; Limit length (100k bytes) to prevent overwhelming terminal buffer
+      (when (<= (length base64) 100000)
+        (let ((osc (format "\e]52;c;%s\a" base64)))
+          (if (getenv "TMUX")
+              (send-string-to-terminal (format "\ePtmux;\e%s\e\\" osc))
+            (send-string-to-terminal osc)))))))
 
-
-
-
+(advice-add 'gui-select-text :after #'+osc52-copy)
 

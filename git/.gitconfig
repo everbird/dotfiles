@@ -2,17 +2,18 @@
     name = everbird
     email = stephen.zhuang@gmail.com
     signingkey = FAA61A2469D5A6B45BCCD2E7E49BC4DB36E758D5
+[diff]
+    renames = true
 [alias]
     aa = add --all
     b = branch -vv
     br = branch
     cb = checkout HEAD -b
     ci = commit
-    cis = commit -S #optional if siging is false
+    cis = commit -S
     co = checkout
     di = diff
     dc = diff --cached
-    di = diff
     du = diff @{u}
     dus = diff @{u} --stat
     ff = merge --ff-only
@@ -39,7 +40,10 @@
 [color]
     diff = auto
     status = auto
-[include]
-    path = local-config
+    ui = true
 [gpg]
     program = gpg
+[includeIf "gitdir:~/workspace/work/"]
+    path = ~/.gitconfig.work
+[include]
+    path = ~/.gitconfig.local

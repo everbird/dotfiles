@@ -1,4 +1,9 @@
+# Editor swap/backup files
 *~
 *.swp
-*.pyc
+*.swo
 .DS_Store
+
+# Secrets & machine-local configs
+.netrc
+*.local
