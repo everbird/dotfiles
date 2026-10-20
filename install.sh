@@ -1,12 +1,74 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Support `curl -fsSL https://raw.githubusercontent.com/everbird/dotfiles/master/install.sh | bash`
+if [[ -z "${BASH_SOURCE[0]:-}" ]] || [[ ! -f "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/zsh/.zshrc" ]]; then
+  DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+  if [[ ! -d "$DOTFILES_DIR/.git" ]]; then
+    echo "[INFO] Cloning everbird/dotfiles into $DOTFILES_DIR..."
+    git clone https://github.com/everbird/dotfiles.git "$DOTFILES_DIR"
+  else
+    echo "[INFO] Updating existing repository at $DOTFILES_DIR..."
+    git -C "$DOTFILES_DIR" pull --ff-only
+  fi
+  exec bash "$DOTFILES_DIR/install.sh" "${@:-all}"
+fi
+
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="${HOME}"
 BACKUP_SUFFIX="bak.$(date +%Y%m%d%H%M%S)"
 ZSH_PLUGIN_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
 
-# Colors
+# ==============================================================================
+# 1. Declarative Dotfiles Map
+#    Format: "repo_relative_path:home_relative_path"
+#    To manage a new dotfile in the future, just add one line to DOTFILE_LINKS!
+# ==============================================================================
+DOTFILE_LINKS=(
+  "zsh/.zshenv:.zshenv"
+  "zsh/.zshrc:.zshrc"
+  "zsh/.p10k.zsh:.p10k.zsh"
+  "git/.gitconfig:.gitconfig"
+  "git/.config/git/ignore:.config/git/ignore"
+  "tmux/.tmux.conf:.tmux.conf"
+  "editorconfig/.editorconfig:.editorconfig"
+  "doom/.doom.d/init.el:.doom.d/init.el"
+  "doom/.doom.d/config.el:.doom.d/config.el"
+  "doom/.doom.d/packages.el:.doom.d/packages.el"
+  "doom/.doom.d/custom.el:.doom.d/custom.el"
+)
+
+# OS-specific links added automatically
+case "$(uname -s)" in
+  Darwin*) DOTFILE_LINKS+=("gpg/gpg-agent.conf.macos:.gnupg/gpg-agent.conf") ;;
+  Linux*)  DOTFILE_LINKS+=("gpg/gpg-agent.conf.linux:.gnupg/gpg-agent.conf") ;;
+esac
+
+# External Zsh plugins (GitHub owner/repo)
+ZSH_PLUGINS=(
+  "romkatv/powerlevel10k"
+  "zsh-users/zsh-completions"
+  "zsh-users/zsh-autosuggestions"
+  "zsh-users/zsh-syntax-highlighting"
+  "agkozak/zsh-z"
+)
+
+# Obsolete symlinks from the legacy dotfiles layout to clean up automatically
+LEGACY_SYMLINKS=(
+  ".oh-my-zsh"
+  ".zplug"
+  ".spacemacs"
+  ".ohmyvocabularyrc"
+  ".goldendict/config"
+  "bin/pex"
+  "bin/mdict.pex"
+  "bin/omv"
+  "bin/tosink"
+)
+
+# ==============================================================================
+# 2. Internal Helpers
+# ==============================================================================
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
@@ -18,7 +80,6 @@ ok()    { printf "${GREEN}[OK]${NC}    %s\n" "$*"; }
 warn()  { printf "${YELLOW}[WARN]${NC}  %s\n" "$*"; }
 err()   { printf "${RED}[ERR]${NC}   %s\n" "$*" >&2; }
 
-# Safely create/update a symlink: link_file <source_abs_path> <target_abs_path>
 link_file() {
   local src="$1"
   local dst="$2"
@@ -48,7 +109,6 @@ link_file() {
   ok "Linked $dst -> $src"
 }
 
-# Unlink if pointing into DOTFILES_DIR
 unlink_file() {
   local dst="$1"
   if [[ -L "$dst" ]]; then
@@ -61,46 +121,56 @@ unlink_file() {
   fi
 }
 
+cleanup_legacy_symlinks() {
+  for rel in "${LEGACY_SYMLINKS[@]}"; do
+    local dst="$TARGET_DIR/$rel"
+    if [[ -L "$dst" ]]; then
+      local target
+      target="$(readlink "$dst")"
+      if [[ "$target" == *"dotfiles"* || "$target" == *"bundle/"* ]]; then
+        rm -f "$dst"
+        ok "Removed legacy symlink: $dst ($target)"
+      fi
+    fi
+  done
+}
+
+check_link() {
+  local label="$1"
+  local dst="$2"
+  local expected="$3"
+
+  if [[ -L "$dst" ]]; then
+    local actual
+    actual="$(readlink "$dst")"
+    if [[ "$actual" == "$expected" ]]; then
+      printf "  %-28s ${GREEN}OK${NC} -> %s\n" "$label" "$actual"
+    else
+      printf "  %-28s ${YELLOW}DRIFTED${NC} -> %s (expected %s)\n" "$label" "$actual" "$expected"
+    fi
+  elif [[ -e "$dst" ]]; then
+    printf "  %-28s ${YELLOW}REGULAR FILE${NC} (%s)\n" "$label" "$dst"
+  else
+    printf "  %-28s ${RED}MISSING${NC} (%s)\n" "$label" "$dst"
+  fi
+}
+
+# ==============================================================================
+# 3. Commands: link / bootstrap / status / unlink
+# ==============================================================================
 do_link() {
   info "Linking dotfiles from $DOTFILES_DIR to $TARGET_DIR ..."
 
-  # Adopt ~/.p10k.zsh into repo if not yet present in zsh/.p10k.zsh
-  if [[ ! -f "$DOTFILES_DIR/zsh/.p10k.zsh" && -f "$TARGET_DIR/.p10k.zsh" && ! -L "$TARGET_DIR/.p10k.zsh" ]]; then
-    info "Adopting existing ~/.p10k.zsh into repository..."
-    cp "$TARGET_DIR/.p10k.zsh" "$DOTFILES_DIR/zsh/.p10k.zsh"
-  fi
-
-  # 1. Zsh
-  link_file "$DOTFILES_DIR/zsh/.zshenv" "$TARGET_DIR/.zshenv"
-  link_file "$DOTFILES_DIR/zsh/.zshrc" "$TARGET_DIR/.zshrc"
-  [[ -f "$DOTFILES_DIR/zsh/.p10k.zsh" ]] && link_file "$DOTFILES_DIR/zsh/.p10k.zsh" "$TARGET_DIR/.p10k.zsh"
-
-  # 2. Git
-  link_file "$DOTFILES_DIR/git/.gitconfig" "$TARGET_DIR/.gitconfig"
-  link_file "$DOTFILES_DIR/git/.config/git/ignore" "$TARGET_DIR/.config/git/ignore"
-
-  # 3. Tmux
-  link_file "$DOTFILES_DIR/tmux/.tmux.conf" "$TARGET_DIR/.tmux.conf"
-
-  # 4. EditorConfig
-  link_file "$DOTFILES_DIR/editorconfig/.editorconfig" "$TARGET_DIR/.editorconfig"
-
-  # 5. Doom Emacs config
-  for f in init.el config.el packages.el custom.el; do
-    link_file "$DOTFILES_DIR/doom/.doom.d/$f" "$TARGET_DIR/.doom.d/$f"
-  done
-
-  # 6. GPG Agent (OS-aware)
   mkdir -p "$TARGET_DIR/.gnupg"
   chmod 700 "$TARGET_DIR/.gnupg"
-  case "$(uname -s)" in
-    Darwin*)
-      link_file "$DOTFILES_DIR/gpg/gpg-agent.conf.macos" "$TARGET_DIR/.gnupg/gpg-agent.conf"
-      ;;
-    Linux*)
-      link_file "$DOTFILES_DIR/gpg/gpg-agent.conf.linux" "$TARGET_DIR/.gnupg/gpg-agent.conf"
-      ;;
-  esac
+
+  for entry in "${DOTFILE_LINKS[@]}"; do
+    local src_rel="${entry%%:*}"
+    local dst_rel="${entry#*:}"
+    link_file "$DOTFILES_DIR/$src_rel" "$TARGET_DIR/$dst_rel"
+  done
+
+  cleanup_legacy_symlinks
 }
 
 do_bootstrap() {
@@ -108,14 +178,7 @@ do_bootstrap() {
 
   # 1. Zsh plugins
   mkdir -p "$ZSH_PLUGIN_DIR"
-  local zsh_repos=(
-    "romkatv/powerlevel10k"
-    "zsh-users/zsh-completions"
-    "zsh-users/zsh-autosuggestions"
-    "zsh-users/zsh-syntax-highlighting"
-    "agkozak/zsh-z"
-  )
-  for repo in "${zsh_repos[@]}"; do
+  for repo in "${ZSH_PLUGINS[@]}"; do
     local name="${repo#*/}"
     local dest="$ZSH_PLUGIN_DIR/$name"
     if [[ -d "$dest" ]]; then
@@ -172,47 +235,18 @@ do_bootstrap() {
   fi
 }
 
-check_link() {
-  local label="$1"
-  local dst="$2"
-  local expected="$3"
-
-  if [[ -L "$dst" ]]; then
-    local actual
-    actual="$(readlink "$dst")"
-    if [[ "$actual" == "$expected" ]]; then
-      printf "  %-28s ${GREEN}OK${NC} -> %s\n" "$label" "$actual"
-    else
-      printf "  %-28s ${YELLOW}DRIFTED${NC} -> %s (expected %s)\n" "$label" "$actual" "$expected"
-    fi
-  elif [[ -e "$dst" ]]; then
-    printf "  %-28s ${YELLOW}REGULAR FILE${NC} (%s)\n" "$label" "$dst"
-  else
-    printf "  %-28s ${RED}MISSING${NC} (%s)\n" "$label" "$dst"
-  fi
-}
-
 do_status() {
   info "Dotfiles Symlink Status ($DOTFILES_DIR):"
-  check_link ".zshenv"             "$TARGET_DIR/.zshenv"             "$DOTFILES_DIR/zsh/.zshenv"
-  check_link ".zshrc"              "$TARGET_DIR/.zshrc"              "$DOTFILES_DIR/zsh/.zshrc"
-  check_link ".p10k.zsh"           "$TARGET_DIR/.p10k.zsh"           "$DOTFILES_DIR/zsh/.p10k.zsh"
-  check_link ".gitconfig"          "$TARGET_DIR/.gitconfig"          "$DOTFILES_DIR/git/.gitconfig"
-  check_link ".config/git/ignore"  "$TARGET_DIR/.config/git/ignore"  "$DOTFILES_DIR/git/.config/git/ignore"
-  check_link ".tmux.conf"          "$TARGET_DIR/.tmux.conf"          "$DOTFILES_DIR/tmux/.tmux.conf"
-  check_link ".editorconfig"       "$TARGET_DIR/.editorconfig"       "$DOTFILES_DIR/editorconfig/.editorconfig"
-  check_link ".doom.d/config.el"   "$TARGET_DIR/.doom.d/config.el"   "$DOTFILES_DIR/doom/.doom.d/config.el"
-  check_link ".doom.d/init.el"     "$TARGET_DIR/.doom.d/init.el"     "$DOTFILES_DIR/doom/.doom.d/init.el"
-  check_link ".doom.d/packages.el" "$TARGET_DIR/.doom.d/packages.el" "$DOTFILES_DIR/doom/.doom.d/packages.el"
-
-  case "$(uname -s)" in
-    Darwin*) check_link ".gnupg/gpg-agent.conf" "$TARGET_DIR/.gnupg/gpg-agent.conf" "$DOTFILES_DIR/gpg/gpg-agent.conf.macos" ;;
-    Linux*)  check_link ".gnupg/gpg-agent.conf" "$TARGET_DIR/.gnupg/gpg-agent.conf" "$DOTFILES_DIR/gpg/gpg-agent.conf.linux" ;;
-  esac
+  for entry in "${DOTFILE_LINKS[@]}"; do
+    local src_rel="${entry%%:*}"
+    local dst_rel="${entry#*:}"
+    check_link "$dst_rel" "$TARGET_DIR/$dst_rel" "$DOTFILES_DIR/$src_rel"
+  done
 
   echo
   info "External Frameworks & Plugins Status:"
-  for p in powerlevel10k zsh-completions zsh-autosuggestions zsh-syntax-highlighting zsh-z; do
+  for repo in "${ZSH_PLUGINS[@]}"; do
+    local p="${repo#*/}"
     if [[ -d "$ZSH_PLUGIN_DIR/$p" ]]; then
       printf "  %-28s ${GREEN}INSTALLED${NC} (%s)\n" "zsh:$p" "$ZSH_PLUGIN_DIR/$p"
     else
@@ -230,17 +264,10 @@ do_status() {
 
 do_unlink() {
   info "Unlinking dotfiles pointing to $DOTFILES_DIR..."
-  unlink_file "$TARGET_DIR/.zshenv"
-  unlink_file "$TARGET_DIR/.zshrc"
-  unlink_file "$TARGET_DIR/.p10k.zsh"
-  unlink_file "$TARGET_DIR/.gitconfig"
-  unlink_file "$TARGET_DIR/.config/git/ignore"
-  unlink_file "$TARGET_DIR/.tmux.conf"
-  unlink_file "$TARGET_DIR/.editorconfig"
-  for f in init.el config.el packages.el custom.el; do
-    unlink_file "$TARGET_DIR/.doom.d/$f"
+  for entry in "${DOTFILE_LINKS[@]}"; do
+    local dst_rel="${entry#*:}"
+    unlink_file "$TARGET_DIR/$dst_rel"
   done
-  unlink_file "$TARGET_DIR/.gnupg/gpg-agent.conf"
 }
 
 cmd="${1:-all}"
