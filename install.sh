@@ -227,11 +227,51 @@ do_bootstrap() {
     ok "Tmux TPM already installed ($tpm_dir)"
   fi
 
-  # 4. Doom Emacs framework
-  if [[ -e "$HOME/.emacs.d" ]]; then
-    ok "Emacs directory already present ($HOME/.emacs.d)"
+  # 4. Doom Emacs framework (~/.emacs.d)
+  local emacs_dir="$HOME/.emacs.d"
+  local old_doom=""
+  if [[ -L "$emacs_dir" ]]; then
+    old_doom="$(readlink -f "$emacs_dir" 2>/dev/null || true)"
+    rm -f "$emacs_dir"
+  elif [[ -d "$DOTFILES_DIR/bundle/doom-emacs" && ! -d "$emacs_dir" ]]; then
+    old_doom="$DOTFILES_DIR/bundle/doom-emacs"
+  elif [[ -d "$HOME/.dotfiles/bundle/doom-emacs" && ! -d "$emacs_dir" ]]; then
+    old_doom="$HOME/.dotfiles/bundle/doom-emacs"
+  fi
+
+  if [[ ! -d "$emacs_dir" ]]; then
+    if [[ -n "$old_doom" && -x "$old_doom/bin/doom" ]]; then
+      info "Migrating Doom Emacs from $old_doom to standalone $emacs_dir..."
+      local old_gitdir=""
+      if [[ -f "$old_doom/.git" ]]; then
+        old_gitdir="$(cd "$old_doom" && cd "$(git rev-parse --git-dir)" && pwd)"
+      fi
+      mv "$old_doom" "$emacs_dir"
+      if [[ -f "$emacs_dir/.git" && -n "$old_gitdir" && -d "$old_gitdir" ]]; then
+        rm -f "$emacs_dir/.git"
+        mv "$old_gitdir" "$emacs_dir/.git"
+        git config --file "$emacs_dir/.git/config" --unset core.worktree || true
+      fi
+      if [[ -f "$emacs_dir/sources/doom+/.git" && -d "$emacs_dir/.git/modules/sources/doom+" ]]; then
+        echo "gitdir: ../../.git/modules/sources/doom+" > "$emacs_dir/sources/doom+/.git"
+        git config --file "$emacs_dir/.git/modules/sources/doom+/config" --unset core.worktree || true
+      fi
+      ok "Migrated standalone Doom Emacs ($emacs_dir)"
+    else
+      info "Installing standalone Doom Emacs into $emacs_dir..."
+      git clone --recursive https://github.com/doomemacs/doomemacs.git "$emacs_dir"
+      if [[ -n "$old_doom" && -d "$old_doom" ]]; then
+        for runtime_dir in .local eln-cache auto-save-list; do
+          if [[ -d "$old_doom/$runtime_dir" && ! -e "$emacs_dir/$runtime_dir" ]]; then
+            info "Migrating $runtime_dir from $old_doom..."
+            mv "$old_doom/$runtime_dir" "$emacs_dir/$runtime_dir"
+          fi
+        done
+      fi
+      ok "Installed Doom Emacs ($emacs_dir)"
+    fi
   else
-    info "Doom Emacs not found at ~/.emacs.d (run: git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.emacs.d && ~/.emacs.d/bin/doom install)"
+    ok "Doom Emacs already installed ($emacs_dir)"
   fi
 }
 
@@ -259,6 +299,13 @@ do_status() {
     printf "  %-28s ${GREEN}INSTALLED${NC} (%s)\n" "tmux:tpm" "$HOME/.tmux/plugins/tpm"
   else
     printf "  %-28s ${RED}MISSING${NC}   (%s)\n" "tmux:tpm" "$HOME/.tmux/plugins/tpm"
+  fi
+  if [[ -x "$HOME/.emacs.d/bin/doom" && ! -L "$HOME/.emacs.d" ]]; then
+    printf "  %-28s ${GREEN}INSTALLED${NC} (%s)\n" "doom (.emacs.d)" "$HOME/.emacs.d"
+  elif [[ -L "$HOME/.emacs.d" ]]; then
+    printf "  %-28s ${YELLOW}SYMLINK${NC}   (%s -> %s)\n" "doom (.emacs.d)" "$HOME/.emacs.d" "$(readlink "$HOME/.emacs.d")"
+  else
+    printf "  %-28s ${RED}MISSING${NC}   (%s)\n" "doom (.emacs.d)" "$HOME/.emacs.d"
   fi
 }
 
